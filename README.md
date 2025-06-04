@@ -21,14 +21,13 @@ Introduced in **Unsal *et al.* 2022**, [DOI: 10.1038/s42256-022-00457-9](https:/
 
 ---
 
-## 🔧 Getting Started
+## Getting Started
 
 ### Option 1: Use the Web Server (Recommended)
 
 Run benchmarks directly in the browser:
 
-▶️ **HuggingFace Spaces:**  
-<https://huggingface.co/spaces/HUBioDataLab/PROBE>
+▶️ [**PROBE Leaderboard Space**](https://huggingface.co/spaces/HUBioDataLab/PROBE)
 
 Upload your embedding vectors, select tasks, and get results. Interactive leaderboards and plots are available.
 
@@ -174,12 +173,10 @@ Released under the **GNU General Public License v3.0**
 
 ## Citation
 
-> **Unsal S.**, *et al.* (2022).  
-> *Learning functional properties of proteins with language models.*  
-> *Nature Machine Intelligence*, 4, 227–245.  
-> [DOI: 10.1038/s42256-022-00457-9](https://doi.org/10.1038/s42256-022-00457-9)
+```bash
+Unsal, S., Atas, H., Albayrak, M. et al. Learning functional properties of proteins with language models. Nat Mach Intell 4, 227–245 (2022). https://doi.org/10.1038/s42256-022-00457-9
+```
 
-> **Çevrim E.**, *et al.* (2025).  
-> *A Benchmarking Platform for Assessing Protein Language Models on Function-Related Tasks.*  
-> *bioRxiv*  
-> [DOI: 10.1101/2025.04.10.648084](https://doi.org/10.1101/2025.04.10.648084)
+```bash
+Çevrim, E., Yiğit, M. G., Ulusoy, E., Yılmaz, A., & Doğan, T. (2025). A benchmarking platform for assessing protein language models on function-related prediction tasks. bioRxiv. https://doi.org/10.1101/2025.04.10.648084
+```
