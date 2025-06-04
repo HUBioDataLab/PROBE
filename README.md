@@ -1,155 +1,185 @@
-# PROBE (Protein RepresentatiOn BEnchmark): Function-Centric Evaluation of Protein Representation Methods
+# PROBE: Protein RepresentatiOn BEnchmark
 
-- PROBE runs benchmark analyses on protein representation/feature vectors of any representation learning method in order to evaluate its predictive performance on protein function related predictive tasks, and to and compare it other methods from literature.
+**Function-centric evaluation of protein representation models**
 
-- Aiming to evaluate how much each representation model captures different facets of functional information, we constructed and applied 4 independent benchmark tests based on;
-  - inferring semantic similarities between proteins,
-  - predicting ontology-based protein functions, 
-  - classifying drug target proteins according to their families, and
-  - estimating protein-protein binding affinities.
+![PROBE overview](PROBE_workflow_figure.jpg)
 
-- PROBE is part of the the study entitled [Learning functional properties of proteins with language models](https://rdcu.be/cJAKN) which is schematically summarized in the figure below:<br/>
- 
- ![Summary of The Study](https://github.com/serbulent/TrainableRepresentationAnalysis/blob/master/evalprotrep_summary_figure.jpg)
+---
 
-If you find PROBE useful please consider citing:
+## Overview
 
-Unsal, S., Atas, H., Albayrak, M., Turhan, K., Acar, A. C., & Doğan, T. (2022). Learning functional properties of proteins with language models. *Nature Machine Intelligence, 4*(3), 227-245.
+**PROBE** evaluates fixed-length protein embeddings for how well they capture *functional* biological knowledge. It provides **four complementary benchmarks**:
 
-# How to Run PROBE
+| Benchmark | Biological Question | Key Metric(s) | Dataset & Split |
+|-----------|---------------------|----------------|------------------|
+| **Semantic Similarity Inference** | Do embeddings place functionally similar proteins closer together? | Spearman ρ (embedding distance vs Resnik GO similarity) | 500, 200, Sparse protein sets |
+| **GO-Term Function Prediction** | Can GO terms be predicted from embeddings? | F-max, AUROC, AUPR (5-fold CV) | Swiss-Prot Human; splits by size (High / Middle / Low); MF, BP, CC |
+| **Drug-Target Family Classification** | Can embeddings classify proteins into drug-target families? | MCC, Accuracy, Macro-F1 (10-fold CV) | Random and identity-based splits (nc, uc50, uc30, mm15) |
+| **Protein–Protein Binding Affinity** | Can embeddings predict ΔΔG of interface mutants? | MSE, MAE, Pearson R (10-fold CV) | SKEMPI v1 (3,047 mutants) |
 
-- **Step-by-step operation:**
-1. Clone this repository
-2. Install dependencies (given below)
-3. Download [datasets](https://drive.google.com/file/d/1elGfjI4jwzcjOBT6LoMnz-7DtdwPFV6i/view?usp=sharing), unzip and place the folders "auxilary_input" and "preprocess" directly  under the directory 'data'.
-4. If you wish to benchmark one or more of the 20 protein representation methods from the literature (that are included in our study) download [representation vectors for all human proteins](https://drive.google.com/drive/u/1/folders/1WmYyaBhOYtI4Hzbsg2sTQHRN6LVrYFhw) for benchmarks 1, 2 & 3, and [representation vectors for the samples in the SKEMPI dataset](https://drive.google.com/drive/u/1/folders/18sVmR0Xx_QfmjeqCPxz3gS5DS09FqS_T) for benchmark 4, and place the csv formatted vector files directly under the directory 'data/representation_vectors'. If you wish to benchmark your own protein representation method, please prepare your representation vector files by following the steps in the section enetitled "Benchmarking your own representation model" (below), and place csv formatted vector files directly under the directory 'data/representation_vectors'.
-5. Edit the configuration file "probe_config.yaml" by changing parameters as desired and setting paths of your file(s) (the content of an example config file for running the benchmark analyses on "AAC" representation vectors is provided below).
-6. cd into the bin directory and run PROBE.py
- - i.e., python PROBE.py
+Introduced in **Unsal *et al.* 2022**, [DOI: 10.1038/s42256-022-00457-9](https://doi.org/10.1038/s42256-022-00457-9)
 
-- **Dependencies**
-  - Python 3.8.1
-  - Pandas 1.1.4
-  - PyYaml 5.1
-  - Scikit-Learn 0.22
-  - Scikit-MultiLearn 0.2.0
-  - Tqdm 4.51
+---
 
-- It is also possible to run PROBE online via [Code Ocean](https://codeocean.com/capsule/8584011/tree).
+## 🔧 Getting Started
 
-- **Example configuration file:**
+### Option 1: Use the Web Server (Recommended)
 
-```yaml
-##Representation name (used for naming output files):
-representation_name: AAC
-#representation_name: LEARNED-VEC
-#representation_name: T5
+Run benchmarks directly in the browser:
 
-#Benchmarks (should be one of the "similarity","family","function","affinity","all"):
-# "similarity" for running protein semantic similarity inference benchmark
-# "function" for running ontology-based function prediction benchmark
-# "family" for running drug target protein family classification benchmark
-# "affinity" for running protein-protein binding affinity estimation benchmark
-# "all" for running all benchmarks
-benchmark: all
+▶️ **HuggingFace Spaces:**  
+<https://huggingface.co/spaces/HUBioDataLab/PROBE>
 
-#Path of the file containing representation vectors of UniProtKB/Swiss-Prot human proteins:
-representation_file_human: ../data/representation_vectors/AAC_UNIPROT_HUMAN.csv
-#representation_file_human: ../data/representation_vectors/LEARNED-VEC_UNIPROT_HUMAN.csv
-#representation_file_human: ../data/representation_vectors/T5_UNIPROT_HUMAN.csv
+Upload your embedding vectors, select tasks, and get results. Interactive leaderboards and plots are available.
 
-#Path of the file containing representation vectors of samples in the SKEMPI dataset: 
-representation_file_affinity: ../data/representation_vectors/skempi_aac_representation_multi_col.csv
-#representation_file_affinity: ../data/representation_vectors/skempi_learned-vec_representation_multi_col.csv
-#representation_file_affinity: ../data/representation_vectors/skempi_t5_representation_multi_col.csv
+Described in **Çevrim *et al.* 2025**, [DOI: 10.1101/2025.04.10.648084](https://doi.org/10.1101/2025.04.10.648084)
 
-#Semantic similarity inference benchmark dataset (should be a list that includes any combination of "Sparse", "200", and "500"):
-similarity_tasks: ["Sparse","200","500"]
+---
 
-#Ontology-based function prediction benchmark dataset in terms of GO aspect (should be one of the following: "MF", "BP", "CC", or "All_Aspects"):
-function_prediction_aspect: All_Aspects
+### Option 2: Run Locally
 
-#Ontology-based function prediction benchmark dataset in terms of size-based-splits (should be one of the following: "High", "Middle", "Low", or "All_Data_Sets")
-function_prediction_dataset: All_Data_Sets
+#### System Requirements
 
-#Drug target protein family classification benchmark dataset in terms of similarity-based splits (should be a list that includes any combination of "nc", "uc50", "uc30", and "mm15")
-family_prediction_dataset: ["nc","uc50","uc30","mm15"]
+- **OS:** Ubuntu 20.04 or compatible
+- **Python:** ≥ 3.9
+- **RAM:** 8 GB minimum (16 GB+ recommended)
 
-#Detailed results (can be True or False)
-detailed_output: False
+#### Installation
 
+```bash
+# Clone repository
+git clone https://github.com/HUBioDataLab/PROBE.git
+cd PROBE
+
+# (Optional) Set up virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-# Definition of output files (results)
+---
 
-  - The files described below are generated as the result/output of a PROBE run. They are located under the "results" folder. This folder currently contains the output files of an example PROBE benchmark run on the vectors of the "AAC" protein representation method.
+### Setup Files
 
-  - **Default output (these files are produced in the default run mode)**:
+#### 1. Download Benchmark Datasets
 
-    - Semantic similarity prediction:
+```bash
+mkdir -p data
+curl -L -o datasets.zip \
+  https://drive.google.com/uc?export=download&id=1elGfjI4jwzcjOBT6LoMnz-7DtdwPFV6i
+unzip datasets.zip -d data
+```
 
-      - "Semantic_sim_inference_similarity_matrix_type_representation_name_.csv": This file includes semantic similarity correlation results for the selected representation method, on the selected dataset(s).
-      - Similarity matrix type (dataset); 500: well-annotated 500 proteins, 200: well-annotated 200 proteins, sparse: sparse uniform dataset.
+Creates:
 
-    - Ontology-based protein function prediction:
+- `data/auxilary_input/`
+- `data/preprocess/`
 
-      - "Ontology_based_function_prediction_5cv_mean_representation_name.tsv": This file includes protein function prediction performance results (mean values of the 5-fold cross validation) for the selected representation method, on the selected dataset(s).
-      - "Ontology_based_function_prediction_5cv_std_representation_name.tsv": This file includes standard deviation values for prediction performance scores on each fold of the 5-fold cross validation.
-      - For detailed explanations regarding datasets, please see Methods sub-section entitled "Ontology-based Protein Function Prediction Benchmark" in our paper entitled: "Evaluation of Methods for Protein Representation Learning: A Quantitative Analysis".
+---
 
-    - Drug-target protein family classification:
+#### 2. Obtain Representation Vectors
 
-      - "Drug_target_protein_family_classification_mean_results_dataset_name_representation_name.csv": This file includes the average overall drug target protein family classification performance results (mean of all protein family classes).
-      - "Drug_target_protein_family_classification_class_based_results_dataset_name_representation_name.csv": This file includes family/class based drug target protein family classification performance results.
-      - Dataset names (train-test split strategies are different between these datasets); nc: Non-clustred/Random split, uc50: Uniclust50 (50% sequence similarity-based split), uc30: Uniclust30 (30% sequence similarity-based split), mm15: MMSeq-15(15% sequence similarity-based split).
+Choose one:
 
-    - Protein-protein binding affinity estimation:
+- **Use Preprocessed Embeddings**
+  - [HUMAN embeddings](https://drive.google.com/drive/folders/1WmYyaBhOYtI4Hzbsg2sTQHRN6LVrYFhw) – for similarity, function, and family benchmarks
+  - [SKEMPI embeddings](https://drive.google.com/drive/folders/18sVmR0Xx_QfmjeqCPxz3gS5DS09FqS_T) – for affinity benchmark
 
-      - "Affinit_prediction_skempiv1_representation_name.csv": This file includes binding affinity estimation test result as mean scores of 10-fold cross-validation, in terms of mean squared error (MSE), mean absolute error (MAE), and Pearson correlation.
-      - "Affinit_prediction_skempiv1_representation_name_detail.csv":This file includes binding affinity estimation test results of 10-fold cross-validation, independently calculated for each fold, in terms of mean squared error (MSE), mean absolute error (MAE), and Pearson correlation.
+- **Or Prepare Your Own Embeddings**  
+  See [Preparing new embedding files](#-preparing-new-embedding-files)
 
-  - **Detailed output (these files are only produced when detailed_output parameter set as True):**
+> Place all embeddings under:  
+> `data/representation_vectors/`
 
-    - Semantic similarity prediction:
+---
 
-      - "Semantic_sim_inference_detailed_distance_scores_ontology_type_similarity_matrix_type.pkl": This file includes semantic similarity scores produced by the representation model.
+#### 3. Configure Benchmark Run
 
-    - Ontology-based protein function prediction:
+Edit the `probe_config.yaml`:
 
-      - "Ontology_based_function_prediction_dataset_name_representation_name_model.pkl":  This file includes scikit-learn SVM models trained for each dataset.
-      - "Ontology_based_function_prediction_dataset_name_representation_name_predictions.tsv": This file includes predicted GO term labels for each dataset.
-      - "Ontology_based_function_prediction_5cv_representation_name.tsv": This file includes prediction performance scores for each fold of the 5-fold cross-validation.
+```yaml
+representation_name: MyModel         # prefix for output files
 
-    - Drug-target protein family classification:
+benchmark: all                       # similarity | function | family | affinity | all
 
-      - "Drug_target_protein_family_classification_score_type_dataset_name_representation_name.npy": This file includes individual scores (f1,accuray,mcc) for each fold of the the 10-fold cross-validation (overall).
-      - "Drug_target_protein_family_classification_class_based_score_type_dataset_name_representation_name.npy": This file includes scores (f1,accuray,mcc) for each fold of the 10-fold cross-validation (per protein family).
-      - "Drug_target_protein_family_classification_confusion_dataset_name_representation_name.csv": This file includes confusion matrices of each fold in the 10-fold cross-validation.
-      - "Drug_target_protein_family_classification_class_based_support_dataset_name_representation_name.npy": This file includes support values for each class, per fold used in the 10-fold cross-validation.
+representation_file_human: ../data/representation_vectors/mymodel_uniprot_human.csv
+representation_file_affinity: ../data/representation_vectors/mymodel_skempi.csv
 
+similarity_tasks: ["Sparse", "200", "500"]
+function_prediction_aspect: All_Aspects
+function_prediction_dataset: All_Data_Sets
+family_prediction_dataset: ["nc", "uc50", "uc30", "mm15"]
 
-# **Benchmarking your own representation model**
+detailed_output: False
+```
 
-- Semantic similarity inference, Ontology-based protein function prediction and drug target protein family classification tasks can be run for any protein representation vector dataset. There are two possible ways to do this: (i) running the online tool on [Code Ocean](https://codeocean.com/capsule/8584011/tree), and (ii) cloning this Github repo and running locally (this option is advised if you plan to run additional tasks over the default ones, as the runtime may significantly increase).
-  
-  - Prepraration of the input vector dataset: 
-    - Generate your representation vectors for all human proteins ([amino acid sequences of canonical isoform human proteins](https://drive.google.com/file/d/1wXF2lmj4ZTahMrl66QpYM2TvHmbcIL6b/view?usp=sharing)), and for the samples in the [SKEMPI dataset](https://drive.google.com/file/d/1m5jssC0RMsiFT_w-Ykh629Pw_An3PInI/view?usp=sharing).
-  - Format of the protein representation file:
-    - Each row corresponds to the representation vector of a particular protein.
-    - Rows & columns: first column's header one should be "Entry", and the rest of the column headers should contain the index number that correspond to dimensions of the vector. After the column header, the rows of the first column should contain the UniProt protein accessions of respective proteins (i.e., each row in this file corresponds to a different protein), rows of other columns should contain representation vector values for the corresponding proteins (i.e. each column in this file corresponds to a dimension of representation vectors).
-    - All representation vectors in a file should have the same size (i.e., fixed sized vectors).
-  - Representation vectors of the whole dataset should be saved in a comma separated (csv) text file.
-  - Example representation vector files can be found in the "data/representation_vectors" folder.
-  - The config file "probe_config.yaml" should be changed to provide the name and the path of the new representation vector dataset. 
-  - Finally, the benchmark tests can be run as described above in the section: "How to Run PROBE".
+Set `detailed_output: True` to additionally save pickled models, raw predictions, confusion matrices, and per‑fold score arrays.
 
+---
 
-# License
+#### 4. Run the Benchmark
 
-Copyright (C)
+```bash
+cd bin
+python PROBE.py
+```
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+Results will be saved in the `results/` folder.
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+---
 
-You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
+## Preparing New Embedding Files
+
+1. **Generate Embeddings** for:
+   - Swiss‑Prot human canonical proteins  
+     [FASTA](https://drive.google.com/uc?export=download&id=1wXF2lmj4ZTahMrl66QpYM2TvHmbcIL6b)
+   - SKEMPI v1 complexes  
+     [FASTA](https://drive.google.com/uc?export=download&id=1m5jssC0RMsiFT_w-Ykh629Pw_An3PInI)
+
+2. **Format as CSV**:
+   * Column 0 header **`Entry`** (UniProt accession or SKEMPI ID)  
+   * Remaining columns: integer feature indices (`0,1,2,…`)  
+   * One row per sequence; all rows have equal vector length
+
+3. **Save to**: `data/representation_vectors/`  
+   Reference the file paths in `probe_config.yaml`.
+
+---
+
+## Output Files
+
+| Benchmark | Filename Pattern | Contents |
+|-----------|------------------|----------|
+| Semantic Similarity | `Semantic_sim_inference_<matrix>_<rep>.csv` | Spearman correlations for 500, 200, Sparse |
+| Function Prediction | `Ontology_based_function_prediction_5cv_mean_<rep>.tsv`<br>`..._std_<rep>.tsv` | Mean ± SD of F-max, AUROC, AUPR |
+| Family Classification | `Drug_target_protein_family_classification_mean_results_<split>_<rep>.csv`<br>`..._class_based_results_...csv` | Overall + per-family metrics |
+| Binding Affinity | `Affinit_prediction_skempiv1_<rep>.csv`<br>`..._detail.csv` | MSE, MAE, Pearson R, per fold |
+
+---
+
+## Acknowledgements
+
+- Benchmark: **Süleyman Unsal, Hakan Atas, Mehmet Albayrak, Kadir Turhan, Ahmet Cem Acar, Tunca Doğan**
+- Web Platform: **Elif Çevrim, Melih Gökay Yiğit, Erva Ulusoy, Ardan Yılmaz, Tunca Doğan**
+
+---
+
+## License
+
+Released under the **GNU General Public License v3.0**
+
+---
+
+## Citation
+
+> **Unsal S.**, *et al.* (2022).  
+> *Learning functional properties of proteins with language models.*  
+> *Nature Machine Intelligence*, 4, 227–245.  
+> [DOI: 10.1038/s42256-022-00457-9](https://doi.org/10.1038/s42256-022-00457-9)
+
+> **Çevrim E.**, *et al.* (2025).  
+> *A Benchmarking Platform for Assessing Protein Language Models on Function-Related Tasks.*  
+> *bioRxiv*  
+> [DOI: 10.1101/2025.04.10.648084](https://doi.org/10.1101/2025.04.10.648084)
