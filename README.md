@@ -178,5 +178,5 @@ Unsal, S., Atas, H., Albayrak, M. et al. Learning functional properties of prote
 ```
 
 ```bash
-Çevrim, E., Yiğit, M. G., Ulusoy, E., Yılmaz, A., & Doğan, T. (2025). A benchmarking platform for assessing protein language models on function-related prediction tasks. bioRxiv. https://doi.org/10.1101/2025.04.10.648084
+Çevrim, E., Yiğit, M. G., Ulusoy, E., Yılmaz, A., & Doğan, T. (2025). A Benchmarking Platform for Assessing Protein Language Models on Function-related Prediction Tasks. In Protein Function Prediction: Methods and Protocols (pp. 241-268). New York, NY: Springer US.
 ```
